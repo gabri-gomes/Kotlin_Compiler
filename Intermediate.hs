@@ -22,32 +22,26 @@ data ValVar = Mutable | Immutable
 type Table = [(String, (Temp, Type, ValVar ))]
 
 -- Gerador de temporários e labels
-type Count = (Int, Int)
-
-
-initialCount :: Count
-initialCount = (0, 0)
+type Supply = (Int, Int)
 
 
 ---------------------------------------------------------------- ** Geradores de Temporários e Labels ** -------------------------------------------------------------
 
 
 -- Geração de um novo temporário
-newTemp :: State Count Temp
+newTemp :: State Supply Temp
 newTemp = do
     (temps, labels) <- State.get
     State.put (temps + 1, labels)
     return ("t" ++ show temps)
 
 -- Geração de um novo label
-newLabel :: State Count Label
+newLabel :: State Supply Label
 newLabel = do
     (temps, labels) <- State.get
     State.put (temps, labels + 1)
     return ("L" ++ show labels)
 
-
---obter dest para dar update à table nas declarações
 getTempFromCode :: [Instr] -> Temp
 getTempFromCode [] = error "No instructions to extract temp"
 getTempFromCode (instr:rest) = 
@@ -66,7 +60,7 @@ getTempFromCode (instr:rest) =
     extractTemp _ = error "No valid instruction to extract temp"
 
 
-popTemps :: Int -> State Count ()
+popTemps :: Int -> State Supply ()
 popTemps n = modify (\(temps, labels) -> (temps - n, labels))
 
 
@@ -160,7 +154,7 @@ checkBoolean table e1 e2 =
 
 
 -- Tradução de expressões
-translateExp :: Exp -> Table -> Temp -> State Count [Instr]
+translateExp :: Exp -> Table -> Temp -> State Supply [Instr]
 translateExp (Num n) _ dest = return [MOVEI dest n]
 translateExp (String s) _ dest = return [MOVES dest s]
 translateExp (Bool b) _ dest = return [MOVEI dest (if b then 1 else 0)]
@@ -211,7 +205,7 @@ translateExp _ _ _ = error "Unfamiliar expression by translateExp"
 
 
 
-translateBinary :: (Temp -> Temp -> Temp -> Instr) -> Exp -> Exp -> Table -> Temp -> State Count [Instr]
+translateBinary :: (Temp -> Temp -> Temp -> Instr) -> Exp -> Exp -> Table -> Temp -> State Supply [Instr]
 translateBinary op e1 e2 table dest = do
     temp1 <- newTemp
     temp2 <- newTemp
@@ -227,7 +221,7 @@ translateBinary op e1 e2 table dest = do
 
 
 
-translateStm :: Exp -> Table -> State Count [Instr]
+translateStm :: Exp -> Table -> State Supply [Instr]
 translateStm (Decl var expr) table = do
     temp <- newTemp
     code <- translateExp expr table temp
@@ -362,7 +356,7 @@ translateStm _ _ = error " Unfamiliar statement"
 
 
 
-translateCond :: Exp -> Table -> Label -> Label -> State Count [Instr]
+translateCond :: Exp -> Table -> Label -> Label -> State Supply [Instr]
 
 translateCond (And cond1 cond2) table firstlabel secondlabel = do
     let t1 = checkType table cond1
@@ -484,7 +478,7 @@ translateCond _ _ _ _ = error "Unfamiliar condition"
 
 
 
-translateStmList :: [Exp] -> Table -> State Count [Instr]
+translateStmList :: [Exp] -> Table -> State Supply [Instr]
 translateStmList [] _ = return []
 translateStmList (stm:rest) table = do
     code1 <- translateStm stm table
@@ -517,7 +511,7 @@ translateStmList (stm:rest) table = do
 ---------------------------------------- ** Tradução do Programa ** ----------------------------------------------------------------
 
 
-translateProg :: Exp -> State Count [Instr]
+translateProg :: Exp -> State Supply [Instr]
 translateProg (Program exps) = do
     instrs <- translateStmList exps []
     return ([LABEL "main"] ++ instrs) 

@@ -11,8 +11,17 @@ import           Control.Monad.State (State)
 import qualified Control.Monad.State as State
 
 
-runIntermidiate :: State Count [Instr] -> [Instr]
-runIntermidiate int = State.evalState int initialCount
+initialSupply :: Supply
+initialSupply = (0, 0)
+
+
+runIntermidiate :: State Supply [Instr] -> [Instr]
+runIntermidiate int = State.evalState int initialSupply
+
+
+
+
+
 
 
 

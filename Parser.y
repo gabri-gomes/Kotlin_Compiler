@@ -41,16 +41,14 @@ string          { TOK_STRING $$ }
 "println"       { TOK_PRINTLN }
 "fun"           { TOK_FUN }   
 "main"          { TOK_MAIN } 
-"readLine"      { TOK_READLN }
+"readLine"        { TOK_READLN }
 "readln"        { TOK_READLN }
-"Int"           { TOK_INT}
+"Int"           {  TOK_INT}
 "Bool"          { TOK_BOOL}  
 ":"             {TOK_DPOINT}     
 id              { TOK_ID $$ }
 
-%nonassoc "==" "!=" "<" "<=" ">" ">=" "||" "&&"
-%left '+' '-'
-%left '*' '/' '%'                  
+                            
 
 %%
 
@@ -60,7 +58,7 @@ Block : "{" Block_s "}"                          { Block [] $2 }
  
 
 Block_s : Stm Block_s                            { $1 : $2 }
-       |                                         { [] }
+           |                                     { [] }
 
 Stm : Block                                         { $1 }
     | If_                                           { $1 }
